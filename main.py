@@ -1,19 +1,17 @@
 from fractions import gcd
-from mechanize import Browser
+import requests
 import json
 import random
 
 
-def attack(mod):
-    browser.open("http://asymcryptwebservice.appspot.com/?section=znp")
-    browser.form = list(browser.forms())[2]
+def attack(mod,s):
     t = random.randint(1, mod)
     y = format(t * t % mod, '02X')
-    browser["y"] = y
+    url = "http://asymcryptwebservice.appspot.com/znp/challenge?y=" + str(y)
+    response = s.get(url)
     print "Show y: " + y
-    response = browser.submit()
     t = random.randint(1, mod)
-    z = int(json.loads(response.read())['root'], 16)
+    z = int(json.loads(response.content)['root'], 16)
     print "Received z: " + format(z, '02X')
     if t != z:
         dev = gcd(t + z, mod)
@@ -26,13 +24,10 @@ def attack(mod):
 
 
 if __name__ == '__main__':
-    print "Connecting to test server"
-    browser = Browser()
-    browser.set_handle_robots(False)
-    browser.open("http://asymcryptwebservice.appspot.com/?section=znp")
-    browser.form = list(browser.forms())[0]
-    print "Get key :"
-    response = browser.submit()
-    mod = int(json.loads(response.read())['modulus'], 16)
+    url = "http://asymcryptwebservice.appspot.com/znp/serverKey"
+    s = requests.session()
+    response = s.get(url)
+    print response
+    mod = int(json.loads(response.content)['modulus'], 16)
     print "KEY:" + format(mod, '02X')
-    attack(mod)
+    attack(mod,s)
